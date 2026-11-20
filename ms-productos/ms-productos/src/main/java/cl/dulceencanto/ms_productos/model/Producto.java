@@ -7,7 +7,7 @@ import lombok.Data;
 @Entity
 @Table(name = "productos")
 public class Producto {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,9 +24,9 @@ public class Producto {
     @Column(nullable = false)
     private Integer stock;
 
-    // Según el requerimiento, por ahora la categoría es solo un texto
-    @Column(nullable = false, length = 50)
-    private String categoria; 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private Categoria categoria;
 
     private String imagenUrl;
 }
