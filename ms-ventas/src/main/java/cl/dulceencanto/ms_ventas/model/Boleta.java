@@ -24,6 +24,9 @@ public class Boleta {
     @Column(nullable = false)
     private Integer total;
 
+    @Column(nullable = false, length = 20)
+    private String estado = "COMPLETADA"; // COMPLETADA o ANULADA
+
     @OneToMany(mappedBy = "boleta", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<DetalleBoleta> detalles;
