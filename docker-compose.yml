@@ -1,23 +1,86 @@
-version: '3.8'
-
 services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-dulce-encanto
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: db_ventas
+      MYSQL_ROOT_PASSWORD: root_dulce_encanto
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_dulce_encanto"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - dulce-encanto-net
+
+  ms-usuarios:
+    build:
+      context: ./ms-usuarios/ms-usuarios
+    container_name: ms-usuarios
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_usuarios?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
+      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - dulce-encanto-net
+
+  ms-productos:
+    build:
+      context: ./ms-productos/ms-productos
+    container_name: ms-productos
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_productos?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
+      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - dulce-encanto-net
+
+  ms-ventas:
+    build:
+      context: ./ms-ventas
+    container_name: ms-ventas
+    restart: on-failure
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_ventas?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
+      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+      MS_PRODUCTOS_URL: http://ms-productos:8082
+      PRODUCTOS_SERVICE_URL: http://ms-productos:8082
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      ms-productos:
+        condition: service_started
+    networks:
+      - dulce-encanto-net
 
 volumes:
   mysql_data:
+
+networks:
+  dulce-encanto-net:
+    driver: bridge
