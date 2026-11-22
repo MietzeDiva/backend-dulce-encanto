@@ -14,21 +14,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class MsUsuariosApplicationTests {
 
-	@Autowired
-	private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
-	@Test
-	void loginWithUnknownEmailReturnsUnauthorized() throws Exception {
-		mockMvc.perform(post("/api/v1/auth/login")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{"correo":"usuario-inexistente@example.invalid","password":"incorrecta"}
-						"""))
-				.andExpect(status().isUnauthorized());
-	}
+    @Test
+    void loginWithUnknownEmailReturnsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"correo":"usuario-inexistente@example.invalid","password":"incorrecta"}
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
 
 }

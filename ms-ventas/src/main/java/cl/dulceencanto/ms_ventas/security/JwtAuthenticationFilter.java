@@ -1,6 +1,7 @@
 package cl.dulceencanto.ms_ventas.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -17,7 +18,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.List;
 
 @Component
@@ -33,21 +33,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
-                String token = authHeader.substring(7);
                 SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-                Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-
-                if (claims.getExpiration().after(new Date())) {
-                    String correo = claims.getSubject();
-                    String rol = claims.get("rol", String.class);
-                    if (correo != null && rol != null) {
-                        var authority = new SimpleGrantedAuthority("ROLE_" + rol.toUpperCase());
-                        var auth = new UsernamePasswordAuthenticationToken(correo, null, List.of(authority));
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                    }
+                Claims claims = Jwts.parser().verifyWith(key).build()
+                        .parseSignedClaims(authHeader.substring(7)).getPayload();
+                String rol = claims.get("rol", String.class);
+                if ("ACCESS".equals(claims.get("tipo", String.class)) && claims.getSubject() != null && rol != null) {
+                    var authority = new SimpleGrantedAuthority("ROLE_" + rol.toUpperCase());
+                    var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
+                    // El id del usuario viaja en "details" para que el controller sepa quién compra
+                    Object userId = claims.get("userId");
+                    if (userId instanceof Number n) auth.setDetails(n.longValue());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-            } catch (Exception ignored) {
-                // Token inválido: continúa sin autenticación y Spring Security devolverá 401/403
+            } catch (JwtException | IllegalArgumentException ignored) {
+                // Token inválido/expirado: sin autenticación → 401
             }
         }
         filterChain.doFilter(request, response);
