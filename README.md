@@ -9,7 +9,7 @@ El proyecto está dividido en tres microservicios independientes orquestados med
 | Servicio | Carpeta | Descripción |
 | :--- | :--- | :--- |
 | **Microservicio de Usuarios** | `ms-usuarios` | Registro de cuentas, autenticación y gestión de roles (`CLIENTE` / `ADMIN`). |
-| **Microservicio de Productos** | `ms-productos` | Gestión del catálogo, categorías, precios y control de inventario. |
+| **Microservicio de Productos** | `ms-productos` | Gestión del catálogo, categorías, precios promocionales (ofertas) y control de inventario. |
 | **Microservicio de Ventas** | `ms-ventas` | Procesamiento de compras, emisión de boletas y descuento de stock. |
 | **Base de Datos** | `mysql-dulce-encanto` | Contenedor MySQL con las bases `db_usuarios`, `db_productos` y `db_ventas`. |
 
@@ -17,8 +17,8 @@ El proyecto está dividido en tres microservicios independientes orquestados med
 
 ## Requisitos Previos
 
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución.
-* [Git](https://git-scm.com/).
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución.
+- [Git](https://git-scm.com/).
 
 ---
 
@@ -28,42 +28,3 @@ El proyecto está dividido en tres microservicios independientes orquestados med
    ```bash
    git clone [https://github.com/MietzeDiva/backend-dulce-encanto.git](https://github.com/MietzeDiva/backend-dulce-encanto.git)
    cd backend-dulce-encanto
-   ```
-
-2. **Configurar variables de entorno:**
-   Crea tu archivo `.env` a partir de la plantilla incluida:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Levantar los contenedores:**
-   ```bash
-   docker-compose up -d --build
-   ```
-
-4. **Verificar que los servicios estén activos:**
-   ```bash
-   docker ps
-   ```
-   Los microservicios quedarán disponibles en los puertos `8081` al `8083` para conectarse con el frontend (`http://localhost:3000`).
-
----
-
-## Configuración de Usuario Administrador
-
-Al levantar los contenedores por primera vez, las tablas se inicializan vacías (sin usuarios precargados). Para habilitar el acceso al panel `/admin`:
-
-1. Crea una cuenta desde el formulario de registro en el frontend (`http://localhost:3000/registro`).
-2. Ejecuta el siguiente comando en la terminal para otorgarle el rol `ADMIN` (ajusta el `id` si no es el primer usuario creado):
-   ```bash
-   docker exec -it mysql-dulce-encanto mysql -uroot -proot_dulce_encanto db_usuarios -e "UPDATE usuarios SET rol='ADMIN' WHERE id=1;"
-   ```
-3. Cierra sesión en la web y vuelve a iniciarla para cargar los permisos de administrador.
-
----
-
-## Comandos Útiles de Docker
-
-* **Ver logs en tiempo real:** `docker-compose logs -f`
-* **Detener los servicios:** `docker-compose down`
-* **Reiniciar contenedores:** `docker-compose restart`
