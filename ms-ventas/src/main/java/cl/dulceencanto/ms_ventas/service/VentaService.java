@@ -88,14 +88,15 @@ public class VentaService {
                 descontarStock(item);
                 descontados.add(item);
 
-                int subtotal = producto.getPrecio() * item.getCantidad();
+                int precioUnitario = precioVigente(producto);
+                int subtotal = precioUnitario * item.getCantidad();
                 totalGeneral += subtotal;
 
                 DetalleBoleta detalle = new DetalleBoleta();
                 detalle.setBoleta(boleta);
                 detalle.setProductoId(producto.getId());
                 detalle.setCantidad(item.getCantidad());
-                detalle.setPrecioUnitario(producto.getPrecio());
+                detalle.setPrecioUnitario(precioUnitario);
                 detalle.setSubtotal(subtotal);
                 detalles.add(detalle);
             }
@@ -107,6 +108,11 @@ public class VentaService {
             revertirStock(descontados);
             throw e;
         }
+    }
+
+    static int precioVigente(ProductoExternalDTO producto) {
+        Integer oferta = producto.getPrecioOferta();
+        return oferta != null && oferta < producto.getPrecio() ? oferta : producto.getPrecio();
     }
 
     @Transactional

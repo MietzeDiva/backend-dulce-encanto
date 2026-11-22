@@ -30,6 +30,10 @@ public class Producto {
     @Column(nullable = false)
     private Integer precio;
 
+    @PositiveOrZero(message = "El precio de oferta no puede ser negativo")
+    @Column(name = "precio_oferta")
+    private Integer precioOferta;
+
     @NotNull(message = "El stock es obligatorio")
     @PositiveOrZero(message = "El stock no puede ser negativo")
     @Column(nullable = false)

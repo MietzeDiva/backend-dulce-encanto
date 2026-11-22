@@ -17,6 +17,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Map;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 class MsProductosApplicationTests {
@@ -52,6 +54,28 @@ class MsProductosApplicationTests {
 				.extracting(Producto::getImagenUrl)
 				.allSatisfy(imagenUrl ->
 						assertThat(imagenUrl).startsWith("https://"));
+	}
+
+	@Test
+	void cargaLosPreciosPromocionalesConfigurados() {
+		Map<String, Integer> ofertasEsperadas = Map.of(
+				"Caja de bombones artesanales", 9900,
+				"Brownie de chocolate y nuez", 2900,
+				"Trufas de chocolate", 4500,
+				"Cheesecake de frutos rojos", 17900,
+				"Pan de masa madre", 3500,
+				"Alfajores de maicena", 5500,
+				"Galletas de avena y chips", 3500
+		);
+
+		ofertasEsperadas.forEach((nombre, precioOferta) -> {
+			Producto producto = productoRepository.findAll().stream()
+					.filter(item -> item.getNombre().equals(nombre))
+					.findFirst()
+					.orElseThrow();
+			assertThat(producto.getPrecioOferta()).isEqualTo(precioOferta);
+			assertThat(producto.getPrecioOferta()).isLessThan(producto.getPrecio());
+		});
 	}
 
 	@Test

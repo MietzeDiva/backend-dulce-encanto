@@ -36,6 +36,16 @@ public class DataLoader implements CommandLineRunner {
             "Galletas de avena y chips", "https://www.dosanclas.com.ar/wp-content/smush-webp/2021/08/galleta_avena_635x360px.jpg.webp"
     );
 
+    private static final Map<String, Integer> PRECIOS_OFERTA = Map.of(
+            "Caja de bombones artesanales", 9900,
+            "Brownie de chocolate y nuez", 2900,
+            "Trufas de chocolate", 4500,
+            "Cheesecake de frutos rojos", 17900,
+            "Pan de masa madre", 3500,
+            "Alfajores de maicena", 5500,
+            "Galletas de avena y chips", 3500
+    );
+
     private final CategoriaRepository categoriaRepository;
     private final ProductoRepository productoRepository;
 
@@ -69,6 +79,7 @@ public class DataLoader implements CommandLineRunner {
         }
 
         productoRepository.findAll().forEach(producto -> {
+            boolean actualizado = false;
             String imagenActual = ProductoImagenUtils.normalize(producto.getImagenUrl());
             String nombre = producto.getNombre();
             String imagenDeEjemplo = IMAGENES_PRODUCTOS.get(nombre);
@@ -80,8 +91,19 @@ public class DataLoader implements CommandLineRunner {
             }
             if (!Objects.equals(producto.getImagenUrl(), imagenActual)) {
                 producto.setImagenUrl(imagenActual);
-                productoRepository.save(producto);
+                actualizado = true;
             }
+
+            Integer precioOferta = PRECIOS_OFERTA.get(nombre);
+            if (precioOferta != null) {
+                Integer ofertaValida = precioOferta < producto.getPrecio() ? precioOferta : null;
+                if (!Objects.equals(producto.getPrecioOferta(), ofertaValida)) {
+                    producto.setPrecioOferta(ofertaValida);
+                    actualizado = true;
+                }
+            }
+
+            if (actualizado) productoRepository.save(producto);
         });
     }
 

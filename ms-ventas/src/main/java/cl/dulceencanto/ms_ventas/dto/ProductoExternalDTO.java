@@ -7,5 +7,6 @@ public class ProductoExternalDTO {
     private Long id;
     private String nombre;
     private Integer precio;
+    private Integer precioOferta;
     private Integer stock;
 }

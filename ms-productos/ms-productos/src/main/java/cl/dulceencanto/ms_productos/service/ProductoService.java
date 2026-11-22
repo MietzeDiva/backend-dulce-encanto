@@ -32,6 +32,7 @@ public class ProductoService {
     }
 
     public Producto guardarProducto(Producto producto) {
+        validarPrecioOferta(producto.getPrecio(), producto.getPrecioOferta());
         if (producto.getCategoria() == null || producto.getCategoria().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe especificar categoria.id");
         }
@@ -44,9 +45,12 @@ public class ProductoService {
 
     public Producto actualizarProducto(Long id, Producto datos) {
         Producto existente = obtenerPorId(id);
+        Integer precioOferta = datos.getPrecioOferta() != null ? datos.getPrecioOferta() : existente.getPrecioOferta();
+        validarPrecioOferta(datos.getPrecio(), precioOferta);
         existente.setNombre(datos.getNombre());
         existente.setDescripcion(datos.getDescripcion());
         existente.setPrecio(datos.getPrecio());
+        existente.setPrecioOferta(precioOferta);
         existente.setStock(datos.getStock());
         existente.setImagenUrl(ProductoImagenUtils.normalize(datos.getImagenUrl()));
         if (datos.getCategoria() != null && datos.getCategoria().getId() != null) {
@@ -55,6 +59,13 @@ public class ProductoService {
             existente.setCategoria(cat);
         }
         return productoRepository.save(existente);
+    }
+
+    private void validarPrecioOferta(Integer precio, Integer precioOferta) {
+        if (precioOferta != null && (precio == null || precioOferta >= precio)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El precio de oferta debe ser menor al precio normal");
+        }
     }
 
     public void eliminarProducto(Long id) {
