@@ -40,8 +40,12 @@ public class VentaService {
         this.productosUrl = productosUrl;
         // Cada llamada a ms-productos lleva un token de servicio (rol SERVICIO), no el token del cliente
         this.restClient = RestClient.builder()
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.generar())
-                .build();
+        // El token de servicio dura 2 minutos: se genera en CADA llamada, no una sola vez
+        .requestInterceptor((request, body, execution) -> {
+            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.generar());
+            return execution.execute(request, body);
+        })
+        .build();
     }
 
     public List<Boleta> listarTodas() {
