@@ -4,6 +4,7 @@ import cl.dulceencanto.ms_productos.model.Categoria;
 import cl.dulceencanto.ms_productos.model.Producto;
 import cl.dulceencanto.ms_productos.repository.CategoriaRepository;
 import cl.dulceencanto.ms_productos.repository.ProductoRepository;
+import cl.dulceencanto.ms_productos.util.ProductoImagenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class ProductoService {
         Categoria cat = categoriaRepository.findById(producto.getCategoria().getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada"));
         producto.setCategoria(cat);
+        producto.setImagenUrl(ProductoImagenUtils.normalize(producto.getImagenUrl()));
         return productoRepository.save(producto);
     }
 
@@ -46,7 +48,7 @@ public class ProductoService {
         existente.setDescripcion(datos.getDescripcion());
         existente.setPrecio(datos.getPrecio());
         existente.setStock(datos.getStock());
-        existente.setImagenUrl(datos.getImagenUrl());
+        existente.setImagenUrl(ProductoImagenUtils.normalize(datos.getImagenUrl()));
         if (datos.getCategoria() != null && datos.getCategoria().getId() != null) {
             Categoria cat = categoriaRepository.findById(datos.getCategoria().getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada"));
