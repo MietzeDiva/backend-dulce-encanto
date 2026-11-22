@@ -28,6 +28,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
         scheme = "bearer",
         bearerFormat = "JWT"
 )
+@SuppressWarnings("null")
 public class SecurityConfig {
 
     @Autowired

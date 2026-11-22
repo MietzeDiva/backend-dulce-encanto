@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 public record UsuarioRequest(
         @NotBlank(message = "El nombre es obligatorio") @Size(max = 100) String nombre,
         @NotBlank(message = "El correo es obligatorio") @Email(message = "Correo inválido") @Size(max = 100) String correo,
-        @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres") String password,
+        @Size(max = 72) @Pattern(regexp = "^(?:\\s*|(?s:(?=.*\\S).{8,}))$", message = "La contraseña debe tener entre 8 y 72 caracteres") String password,
         @NotBlank(message = "El rol es obligatorio")
         @Pattern(regexp = "ADMIN|VENDEDOR|CLIENTE", message = "Rol inválido (ADMIN, VENDEDOR o CLIENTE)") String rol) {
 }

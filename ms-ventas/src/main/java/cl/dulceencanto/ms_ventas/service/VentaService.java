@@ -13,11 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpHeaders;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class VentaService {
 
     private final BoletaRepository boletaRepository;
     private final String productosUrl;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestClient restClient;
 
     public VentaService(BoletaRepository boletaRepository,
                         ServiceTokenProvider tokens,
@@ -38,10 +39,9 @@ public class VentaService {
         this.boletaRepository = boletaRepository;
         this.productosUrl = productosUrl;
         // Cada llamada a ms-productos lleva un token de servicio (rol SERVICIO), no el token del cliente
-        restTemplate.getInterceptors().add((request, body, execution) -> {
-            request.getHeaders().setBearerAuth(tokens.generar());
-            return execution.execute(request, body);
-        });
+        this.restClient = RestClient.builder()
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.generar())
+                .build();
     }
 
     public List<Boleta> listarTodas() {
@@ -117,8 +117,11 @@ public class VentaService {
         }
         for (DetalleBoleta detalle : boleta.getDetalles()) {
             try {
-                restTemplate.put(productosUrl + "/api/v1/productos/" + detalle.getProductoId()
-                        + "/reponer-stock?cantidad=" + detalle.getCantidad(), null);
+                restClient.put()
+                        .uri(productosUrl + "/api/v1/productos/" + detalle.getProductoId()
+                                + "/reponer-stock?cantidad=" + detalle.getCantidad())
+                        .retrieve()
+                        .toBodilessEntity();
             } catch (ResourceAccessException e) {
                 throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                         "No se pudo reponer stock: servicio de productos caído");
@@ -132,9 +135,15 @@ public class VentaService {
 
     private ProductoExternalDTO obtenerProducto(Long productoId) {
         try {
-            return restTemplate.getForObject(productosUrl + "/api/v1/productos/" + productoId, ProductoExternalDTO.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto ID " + productoId + " no existe");
+            return restClient.get()
+                    .uri(productosUrl + "/api/v1/productos/" + productoId)
+                    .retrieve()
+                    .body(ProductoExternalDTO.class);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto ID " + productoId + " no existe");
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Error al consultar ms-productos");
         } catch (ResourceAccessException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "El servicio de productos no está disponible");
         } catch (RestClientException e) {
@@ -144,10 +153,16 @@ public class VentaService {
 
     private void descontarStock(ItemVentaRequest item) {
         try {
-            restTemplate.put(productosUrl + "/api/v1/productos/" + item.getProductoId()
-                    + "/descontar-stock?cantidad=" + item.getCantidad(), null);
-        } catch (HttpClientErrorException.Conflict e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Conflicto de stock al procesar la venta");
+            restClient.put()
+                    .uri(productosUrl + "/api/v1/productos/" + item.getProductoId()
+                            + "/descontar-stock?cantidad=" + item.getCantidad())
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == HttpStatus.CONFLICT.value()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Conflicto de stock al procesar la venta");
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "ms-productos rechazó el descuento de stock");
         } catch (ResourceAccessException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "El servicio de productos no está disponible");
         } catch (RestClientException e) {
@@ -158,8 +173,11 @@ public class VentaService {
     private void revertirStock(List<ItemVentaRequest> descontados) {
         for (ItemVentaRequest item : descontados) {
             try {
-                restTemplate.put(productosUrl + "/api/v1/productos/" + item.getProductoId()
-                        + "/reponer-stock?cantidad=" + item.getCantidad(), null);
+                restClient.put()
+                        .uri(productosUrl + "/api/v1/productos/" + item.getProductoId()
+                                + "/reponer-stock?cantidad=" + item.getCantidad())
+                        .retrieve()
+                        .toBodilessEntity();
             } catch (RestClientException e) {
                 log.error("No se pudo revertir el stock del producto {} (cantidad {}): {}",
                         item.getProductoId(), item.getCantidad(), e.getMessage());
