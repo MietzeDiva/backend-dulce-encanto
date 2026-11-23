@@ -8,33 +8,35 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * Crea cuentas de demostración (admin, vendedor, cliente) si no existen.
- * Se desactiva con APP_SEED_ENABLED=false. La contraseña sale de APP_SEED_PASSWORD (.env).
- */
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class DataLoader implements CommandLineRunner {
 
     private final UsuarioRepository repo;
     private final PasswordEncoder encoder;
-    private final String password;
+    private final String passAdmin;
+    private final String passVendedor;
+    private final String passCliente;
 
     public DataLoader(UsuarioRepository repo, PasswordEncoder encoder,
-                      @Value("${app.seed.password:Dulce2026!}") String password) {
+                      @Value("${app.seed.admin-password}") String passAdmin,
+                      @Value("${app.seed.vendedor-password}") String passVendedor,
+                      @Value("${app.seed.cliente-password}") String passCliente) {
         this.repo = repo;
         this.encoder = encoder;
-        this.password = password;
+        this.passAdmin = passAdmin;
+        this.passVendedor = passVendedor;
+        this.passCliente = passCliente;
     }
 
     @Override
     public void run(String... args) {
-        crear("Administrador", "admin@dulceencanto.cl", "ADMIN");
-        crear("Vendedor Demo", "vendedor@dulceencanto.cl", "VENDEDOR");
-        crear("Cliente Demo", "cliente@dulceencanto.cl", "CLIENTE");
+        crear("Administrador", "admin@dulceencanto.cl", passAdmin, "ADMIN");
+        crear("Vendedor Demo", "vendedor@dulceencanto.cl", passVendedor, "VENDEDOR");
+        crear("Cliente Demo", "cliente@dulceencanto.cl", passCliente, "CLIENTE");
     }
 
-    private void crear(String nombre, String correo, String rol) {
+    private void crear(String nombre, String correo, String password, String rol) {
         if (repo.existsByCorreo(correo)) return;
         Usuario u = new Usuario();
         u.setNombre(nombre);
