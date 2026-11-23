@@ -1,16 +1,17 @@
+# Las claves salen del archivo .env (copia .env.example a .env). Ya NO hay secretos escritos aquí.
 services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-dulce-encanto
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_dulce_encanto
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en .env}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_dulce_encanto"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,9 +28,10 @@ services:
     environment:
       SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_usuarios?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
-      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-true}
+      APP_SEED_PASSWORD: ${APP_SEED_PASSWORD:-Dulce2026!}
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -46,9 +48,8 @@ services:
     environment:
       SERVER_PORT: 8082
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_productos?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
-      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -65,11 +66,9 @@ services:
     environment:
       SERVER_PORT: 8083
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_ventas?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root_dulce_encanto
-      JWT_SECRET: DulceEncantoSuperSecretKeyJwt2026MicroserviciosDuocUC!
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
       MS_PRODUCTOS_URL: http://ms-productos:8082
-      PRODUCTOS_SERVICE_URL: http://ms-productos:8082
     depends_on:
       mysql-db:
         condition: service_healthy
